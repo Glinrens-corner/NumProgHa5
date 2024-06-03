@@ -1,0 +1,23 @@
+
+
+# emacs files
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+
+
+# C files
+*.o
+p5_newton
+
+
+#pdfs
+
+*.pdf
+
