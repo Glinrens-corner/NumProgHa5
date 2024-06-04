@@ -38,15 +38,23 @@ struct _grav
 typedef struct _grav grav;
 typedef grav *pgrav;
 
-void eval_f_grav(void *data_v, pvector z, pvector fz)
+void eval_f_grav(void *data, pvector z, pvector fz)
 {
-  pgrav data = (pgrav) data_v;
-
-  
-  // assert(z->rows == 3);
-  for (int iplanet = 0; );
-  
+  pgrav ourData = (pgrav) data;
+  pvector x[] = (pvector*) ourData->x;
+  real *m = ourData->m;
+  pvector res;
+  mult(z,ourData->alpha2,res);
+  pvector t;
+  real d;
+  for (int i=0; i < ourData->n;i++)
+    add(res,
+        mult(sub(x[i],z),
+             ourData->gamma*m[i]/square(dist(x[i],z))),
+        res);
+  fz = res;
 }
+
 
 void eval_Df_grav(void *data, pvector z, pmatrix Dfz)
 {
