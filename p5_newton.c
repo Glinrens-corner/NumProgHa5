@@ -103,7 +103,41 @@ void eval_f_grav(void *data, pvector z, pvector fz)
 
 void eval_Df_grav(void *data, pvector z, pmatrix Dfz)
 {
-  // TODO:
+  pgrav ourData = (pgrav) data;
+  
+  real *masses = ourData->m;
+  real **locations = ourData->x;
+  real * invec = z->x;
+  //                         ( alpha^2    0       0    )
+  // (d_zi (alpha^2 zj)) z = (   0     alpha^2    0    ) z = alpha^2 z
+  //                         (   0        0    alpha^2 )
+
+  clear_matrix(Dfz);
+  for(int idim; idim < 3 ; idim ++) {
+    Dfz->a[idim*3+idim] += ourData->alpha2;
+  }
+  
+  for (int ibody ; ibody <ourData->n; ibody++ ){
+    real difference[3]; 
+    vec_copy(3, difference, locations[ibody]);
+    vec_substract(3, difference, invec);
+    real norm = nrm2(3,difference, 1);
+    
+    for(int idim; idim < 3 ; idim ++) {
+      Dfz->a[idim*3+idim] -= 1.0/(norm*norm*norm);
+    }
+
+
+    real factor = ourData->gamma*masses[ibody]*3.0/(norm*norm*norm*norm*norm);
+    for (int icol=0; icol <3 ; icol++) {
+      
+      for (int irow=0; irow <3 ; irow++) {
+	Dfz->a[icol*3+irow] += factor * difference[icol];	
+      }
+    }
+    
+  }
+    
 }
 
 unsigned int
@@ -112,7 +146,6 @@ iterate_newton(real eps, int maxiter,
                pmatrix Dfz, void *data_Df, eval_Df eval_Df,
                pvector z)
 {
-  // TODO:
 }
 
 int main(void)
