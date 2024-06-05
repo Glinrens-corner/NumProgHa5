@@ -38,21 +38,66 @@ struct _grav
 typedef struct _grav grav;
 typedef grav *pgrav;
 
+
+/* /\* */
+/*  *  set all entries of a vector to a specified value */
+/*  *\/ */
+/* static void vec_set(int n, real* vec, real value){ */
+/*   for (int ientry =0; ientry < n ; ientry++){ */
+/*     vec[ientry]=value; */
+/*   } */
+/* } */
+
+/*
+ *  copy one vector from another one.
+ */
+static void vec_copy(int n, real* vec, const real* source){
+  for (int ientry =0; ientry < n ; ientry++){
+    vec[ientry]=source[ientry];
+  }
+}
+
+/*
+ *  substract one vector from another one
+ * 
+ *  vec is the vector to be updated
+ */
+static void vec_substract(int n, real* vec, const real* subtrahend){
+  for (int ientry =0; ientry < n ; ientry++){
+    vec[ientry] -= subtrahend[ientry];
+  }
+}
+
+/*
+ *  add  one vector to another one
+ * 
+ *  vec is the vector to be updated
+ */
+static void vec_add(int n, real* vec, const real* summand){
+  for (int ientry =0; ientry < n ; ientry++){
+    vec[ientry] += summand[ientry];
+  }
+}
+
 void eval_f_grav(void *data, pvector z, pvector fz)
 {
   pgrav ourData = (pgrav) data;
-  pvector x[] = (pvector*) ourData->x;
-  real *m = ourData->m;
-  pvector res;
-  mult(z,ourData->alpha2,res);
-  pvector t;
-  real d;
-  for (int i=0; i < ourData->n;i++)
-    add(res,
-        mult(sub(x[i],z),
-             ourData->gamma*m[i]/square(dist(x[i],z))),
-        res);
-  fz = res;
+  
+  real *masses = ourData->m;
+  real **locations = ourData->x;
+  real * res = fz->x;
+  vec_copy(3, res, z->x);
+  scal(3, ourData->alpha2, res, 1); // now alpha^2*z is on fz
+  
+  for (int ibody ; ibody <ourData->n; ibody++ ){
+    real difference[3]; 
+    vec_copy(3, difference, locations[ibody]);
+    vec_substract(3, difference, z->x);
+    real norm = nrm2(3,difference, 1);
+    real scaling_factor = ourData->gamma*masses[ibody]/(norm*norm*norm);
+    scal(3,scaling_factor, difference, 1);
+    vec_add(3,res,difference);
+  }
 }
 
 
