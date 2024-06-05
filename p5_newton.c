@@ -39,14 +39,6 @@ typedef struct _grav grav;
 typedef grav *pgrav;
 
 
-/* /\* */
-/*  *  set all entries of a vector to a specified value */
-/*  *\/ */
-/* static void vec_set(int n, real* vec, real value){ */
-/*   for (int ientry =0; ientry < n ; ientry++){ */
-/*     vec[ientry]=value; */
-/*   } */
-/* } */
 
 /*
  *  copy one vector from another one.
@@ -123,18 +115,14 @@ void eval_Df_grav(void *data, pvector z, pmatrix Dfz)
     vec_substract(3, difference, invec);
   
     real norm = nrm2(3,difference, 1);
-    /* printf("body %i\n(",ibody); */
-    /* for(int idim=0; idim < 3 ; idim ++) { */
-    /*   printf("%e, ", locations[ibody][idim]); */
-    /* } */
-    /* printf(")\n"); */
    
     for(int idim=0; idim < 3 ; idim ++) {
-      Dfz->a[idim*3+idim] -= 1.0/(norm*norm*norm);
+      Dfz->a[idim*3+idim] -= ourData->gamma*masses[ibody]/(norm*norm*norm);
     }
 
 
     real factor = ourData->gamma*masses[ibody]*3.0/(norm*norm*norm*norm*norm);
+ 
     for (int icol=0; icol <3 ; icol++) {
       
       for (int irow=0; irow <3 ; irow++) {
@@ -155,16 +143,13 @@ iterate_newton(real eps, int maxiter,
   real stepwidth = 1.0;
   unsigned int niterations = 0;
   real error = eps+1.0;
-  while(error > eps && niterations < 1000 ){
+  while(error > eps && niterations < 40 ){
     eval_f(data_f, z, fz);
     eval_Df(data_Df,z,Dfz);
-    //    print_matrix(Dfz);
-    //    print_vector(fz);
     decomp_rdrt(Dfz->a, Dfz->ld,Dfz->rows);
     solve_rdrt(Dfz, fz);
-    //    print_vector(fz);
     error = nrm2(3, fz->x, 1)/nrm2(3, z->x, 1);
-    axpy(3,-1.0*stepwidth , fz->x,1,z->x,1); 
+    axpy(3,-1.0*stepwidth , fz->x,1,z->x,1);
     niterations ++;
   }
   return niterations;
@@ -244,7 +229,7 @@ int main(void)
   printf(BCYAN "--------------------------------------------------------------------------------\n");
   printf("  Performing Newton iteration for Lagrangian points:\n");
   printf("--------------------------------------------------------------------------------\n\n" NORMAL);
-
+  
   printf(BCYAN "--------------------------------------------------------------------------------\n");
   printf("  L_1:\n");
   printf("--------------------------------------------------------------------------------\n\n" NORMAL);
@@ -312,7 +297,7 @@ int main(void)
                                                                               : BRED,
          error, NORMAL);
   printf("\n");
-
+  
   printf(BCYAN "--------------------------------------------------------------------------------\n");
   printf("  L_4:\n");
   printf("--------------------------------------------------------------------------------\n\n" NORMAL);
