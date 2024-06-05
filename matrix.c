@@ -335,10 +335,10 @@ void print_matrix(pmatrix a)
 
   for (i = 0; i < a->rows; i++)
   {
-    printf("( %f ", a->a[i]);
+    printf("( %e ", a->a[i]);
     for (j = 1; j < a->cols; j++)
     {
-      printf(", %f ", a->a[i + j * lda]);
+      printf(", %e ", a->a[i + j * lda]);
     }
     printf(")\n");
   }
@@ -383,10 +383,10 @@ void print_vector(pvector x)
 
   printf("Vector (%d)\n", dim);
 
-  printf("( %f ", x->x[0]);
+  printf("( %e ", x->x[0]);
   for (i = 1; i < dim; i++)
   {
-    printf(", %f ", x->x[i]);
+    printf(", %e ", x->x[i]);
   }
   printf(")\n");
 }

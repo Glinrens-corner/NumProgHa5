@@ -89,7 +89,7 @@ void eval_f_grav(void *data, pvector z, pvector fz)
   vec_copy(3, res, z->x);
   scal(3, ourData->alpha2, res, 1); // now alpha^2*z is on fz
   
-  for (int ibody ; ibody <ourData->n; ibody++ ){
+  for (int ibody=0 ; ibody <ourData->n; ibody++ ){
     real difference[3]; 
     vec_copy(3, difference, locations[ibody]);
     vec_substract(3, difference, z->x);
@@ -113,17 +113,23 @@ void eval_Df_grav(void *data, pvector z, pmatrix Dfz)
   //                         (   0        0    alpha^2 )
 
   clear_matrix(Dfz);
-  for(int idim; idim < 3 ; idim ++) {
+  for(int idim=0; idim < 3 ; idim ++) {
     Dfz->a[idim*3+idim] += ourData->alpha2;
   }
   
-  for (int ibody ; ibody <ourData->n; ibody++ ){
+  for (int ibody=0 ; ibody <ourData->n; ibody++ ){
     real difference[3]; 
     vec_copy(3, difference, locations[ibody]);
     vec_substract(3, difference, invec);
+  
     real norm = nrm2(3,difference, 1);
-    
-    for(int idim; idim < 3 ; idim ++) {
+    /* printf("body %i\n(",ibody); */
+    /* for(int idim=0; idim < 3 ; idim ++) { */
+    /*   printf("%e, ", locations[ibody][idim]); */
+    /* } */
+    /* printf(")\n"); */
+   
+    for(int idim=0; idim < 3 ; idim ++) {
       Dfz->a[idim*3+idim] -= 1.0/(norm*norm*norm);
     }
 
@@ -132,12 +138,10 @@ void eval_Df_grav(void *data, pvector z, pmatrix Dfz)
     for (int icol=0; icol <3 ; icol++) {
       
       for (int irow=0; irow <3 ; irow++) {
-	Dfz->a[icol*3+irow] += factor * difference[icol];	
+	Dfz->a[icol*3+irow] += factor * difference[icol]* difference[irow];
       }
-    }
-    
+    } 
   }
-    
 }
 
 unsigned int
@@ -146,6 +150,24 @@ iterate_newton(real eps, int maxiter,
                pmatrix Dfz, void *data_Df, eval_Df eval_Df,
                pvector z)
 {
+
+  
+  real stepwidth = 1.0;
+  unsigned int niterations = 0;
+  real error = eps+1.0;
+  while(error > eps && niterations < 1000 ){
+    eval_f(data_f, z, fz);
+    eval_Df(data_Df,z,Dfz);
+    //    print_matrix(Dfz);
+    //    print_vector(fz);
+    decomp_rdrt(Dfz->a, Dfz->ld,Dfz->rows);
+    solve_rdrt(Dfz, fz);
+    //    print_vector(fz);
+    error = nrm2(3, fz->x, 1)/nrm2(3, z->x, 1);
+    axpy(3,-1.0*stepwidth , fz->x,1,z->x,1); 
+    niterations ++;
+  }
+  return niterations;
 }
 
 int main(void)
@@ -187,6 +209,7 @@ int main(void)
     x[i] = x[0] + i * dim;
   }
 
+  
   dist = 1.496e11;     // distance sun-earth
   gamma = 6.67430e-11; // gravitational constant
   m[0] = 1.989e30;     // mass sun
@@ -244,7 +267,7 @@ int main(void)
                                                                               : BRED,
          error, NORMAL);
   printf("\n");
-
+  
   printf(BCYAN "--------------------------------------------------------------------------------\n");
   printf("  L_2:\n");
   printf("--------------------------------------------------------------------------------\n\n" NORMAL);
@@ -267,7 +290,6 @@ int main(void)
                                                                               : BRED,
          error, NORMAL);
   printf("\n");
-
   printf(BCYAN "--------------------------------------------------------------------------------\n");
   printf("  L_3:\n");
   printf("--------------------------------------------------------------------------------\n\n" NORMAL);
